@@ -1,49 +1,24 @@
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern RISC-V multiprocessor using ANSI C.
+Informe Tarea 3
 
-ACKNOWLEDGMENTS
+1. Implementación de Funciones mprotect y munprotect en el Kernel
+    mprotect(void *addr, int len): Marca una región de memoria, comenzando en la dirección addr y con longitud len (en páginas), como solo lectura. La función calcula el número de páginas afectadas y desactiva el bit de escritura (PTE_W) en cada entrada de tabla de página (PTE) para esa región.
+    munprotect(void *addr, int len): Restaura los permisos de escritura en la región de memoria especificada, volviendo la protección a lectura-escritura. La función reactiva el bit de escritura para cada página en la región especificada.
+    Estas funciones fueron implementadas en el kernel (en protect.c o un archivo similar) y operan sobre la tabla de páginas del proceso actual.
+2. Modificación de la Tabla de Páginas
+    Se utilizó el bit de escritura PTE_W en cada PTE (entrada de tabla de página) para indicar si una página es de solo lectura. Este bit se manipula en las funciones mprotect y munprotect para establecer y revertir la protección de solo lectura.
+3. Añadir Llamadas al Sistema (syscalls) para Exponer las Funciones
+    Para que las funciones mprotect y munprotect sean accesibles en el espacio de usuario:
+    Se definieron dos nuevas llamadas al sistema (sys_mprotect y sys_munprotect) en sysproc.c, que actúan como interfaces hacia mprotect y munprotect.
+    Se agregaron sus números de syscall en syscall.h y se mapearon en syscall.c.
+    Se actualizaron los prototipos en user.h para hacer estas funciones visibles en los programas de usuario.
+4. Actualización de usys.pl para Generar Wrappers de Syscall
+    Se añadieron las entradas mprotect y munprotect en usys.pl, generando automáticamente las funciones de usuario en usys.S. Esto permite a los programas de usuario llamar a mprotect y munprotect como funciones normales de C.
+    Creación de un Programa de Prueba (mprotect_test.c)
+5. Creación de un Programa de Prueba (mprotect_test.c)
+    Se creó un programa de usuario (mprotect_test.c) que verifica el funcionamiento de mprotect y munprotect:
+    Reserva una página de memoria y escribe un mensaje en ella.
+    Aplica mprotect para marcar la página como solo lectura e intenta escribir en la página protegida (lo cual debería fallar).
+    Luego, aplica munprotect para restaurar los permisos de escritura y verifica que la escritura en la página funciona nuevamente.
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)).  See also https://pdos.csail.mit.edu/6.1810/, which provides
-pointers to on-line resources for v6.
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
 
-We are also grateful for the bug reports and patches contributed by
-Takahiro Aoyagi, Marcelo Arroyo, Silas Boyd-Wickizer, Anton Burtsev,
-carlclone, Ian Chen, Dan Cross, Cody Cutler, Mike CAT, Tej Chajed,
-Asami Doi,Wenyang Duan, eyalz800, Nelson Elhage, Saar Ettinger, Alice
-Ferrazzi, Nathaniel Filardo, flespark, Peter Froehlich, Yakir Goaron,
-Shivam Handa, Matt Harvey, Bryan Henry, jaichenhengjie, Jim Huang,
-Matúš Jókay, John Jolly, Alexander Kapshuk, Anders Kaseorg, kehao95,
-Wolfgang Keller, Jungwoo Kim, Jonathan Kimmitt, Eddie Kohler, Vadim
-Kolontsov, Austin Liew, l0stman, Pavan Maddamsetti, Imbar Marinescu,
-Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi Merimovich, Mark
-Morrissey, mtasm, Joel Nider, Hayato Ohhashi, OptimisticSide,
-phosphagos, Harry Porter, Greg Price, RayAndrew, Jude Rich, segfault,
-Ayan Shafqat, Eldar Sehayek, Yongming Shen, Fumiya Shigemitsu, snoire,
-Taojie, Cam Tenny, tyfkda, Warren Toomey, Stephen Tu, Alissa Tung,
-Rafael Ubal, Amane Uehara, Pablo Ventura, Xi Wang, WaheedHafez,
-Keiichi Watanabe, Lucas Wolf, Nicolas Wolovick, wxdao, Grant Wu, x653,
-Jindong Zhang, Icenowy Zheng, ZhUyU1997, and Zou Chang Wei.
-
-The code in the files that constitute xv6 is
-Copyright 2006-2024 Frans Kaashoek, Robert Morris, and Russ Cox.
-
-ERROR REPORTS
-
-Please send errors and suggestions to Frans Kaashoek and Robert Morris
-(kaashoek,rtm@mit.edu).  The main purpose of xv6 is as a teaching
-operating system for MIT's 6.1810, so we are more interested in
-simplifications and clarifications than new features.
-
-BUILDING AND RUNNING XV6
-
-You will need a RISC-V "newlib" tool chain from
-https://github.com/riscv/riscv-gnu-toolchain, and qemu compiled for
-riscv64-softmmu.  Once they are installed, and in your shell
-search path, you can run "make qemu".
